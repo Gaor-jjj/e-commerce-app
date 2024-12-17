@@ -13,6 +13,9 @@ const app = express();
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
+// Routes
+app.use('/api/users', require('./routes/userRoutes'));
+
 // MongoDB connection 
 const clientOptions = {
   serverApi: { version: '1', strict: true, deprecationErrors: true },
