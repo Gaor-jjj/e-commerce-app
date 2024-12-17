@@ -1,16 +1,16 @@
+// Load environment variables
+require('dotenv').config();
+
 const express = require('express');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
-const dotenv = require('dotenv');
-dotenv.config();
 
-const productRoutes = require('./routes/productRoutes');
-
+// Create Express app
 const app = express();
 
 // Middleware
 app.use(bodyParser.json());
-app.use('/api/products', productRoutes);
+app.use(bodyParser.urlencoded({ extended: true }));
 
 // Database connection
 mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
