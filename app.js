@@ -14,6 +14,8 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 // Routes
 app.use('/api/users', require('./routes/userRoutes'));
+// Use the product routes under /api/products
+app.use('/api/products', require('./routes/productRoutes'));
 
 // MongoDB connection 
 const clientOptions = {
