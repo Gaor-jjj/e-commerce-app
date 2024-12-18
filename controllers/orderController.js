@@ -1,42 +1,47 @@
 const Order = require('../models/Order');
 const Cart = require('../models/Cart');
 
-// Create a new order
 const createOrder = async (req, res) => {
   try {
     const userId = req.user.id;
 
-    // Find the user's cart
-    const cart = await Cart.findOne({ user: userId });
+    // Find the user's cart and populate product details
+    const cart = await Cart.findOne({ user: userId }).populate('items.product', 'price');
     if (!cart || cart.items.length === 0) {
       return res.status(400).json({ message: 'Cart is empty' });
     }
 
-    // Calculate total price
-    const totalPrice = cart.items.reduce((total, item) => total + (item.quantity * item.product.price), 0);
+    // Calculate totalAmount
+    const totalAmount = cart.items.reduce((total, item) => {
+      if (!item.product.price) {
+        throw new Error(`Price not found for product ID: ${item.product._id}`);
+      }
+      return total + item.quantity * item.product.price;
+    }, 0);
 
     // Create a new order
     const newOrder = new Order({
       user: userId,
       items: cart.items.map(item => ({
-        product: item.product,
+        product: item.product._id,
         quantity: item.quantity,
-        price: item.product.price, // Store price at the time of order
       })),
-      totalPrice,
+      totalAmount, // Use the correctly calculated totalAmount
     });
 
     // Save the order
     await newOrder.save();
 
-    // Clear the user's cart after the order
-    await Cart.findOneAndDelete({ user: userId });
+    // Clear the user's cart by removing all items
+    cart.items = [];
+    await cart.save();
 
     res.status(201).json({ message: 'Order created successfully', order: newOrder });
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
+
 
 // Get all orders for a user
 const getOrdersForUser = async (req, res) => {
