@@ -1,19 +1,27 @@
 const Cart = require('../models/Cart');
 const Product = require('../models/Product');
+const { v4: uuidv4 } = require('uuid'); // Import UUID for guest carts
 
 // Add item to the cart
 const addToCart = async (req, res) => {
   try {
     const { productId, quantity } = req.body;
-    const userId = req.user.id;
+    const userId = req.user ? req.user.id : null; // Check if user is logged in
+    const cartId = req.cookies.cartId || uuidv4(); // Use cartId from cookies or generate for guest
 
-    // Find or create the user's cart
-    let cart = await Cart.findOne({ user: userId });
+    // Find or create the user's cart (using userId or cartId)
+    let cart;
+    if (userId) {
+      cart = await Cart.findOne({ user: userId });
+    } else {
+      cart = await Cart.findOne({ cartId }); // For guest user, use cartId
+    }
 
     if (!cart) {
       // Create new cart if not found
       cart = new Cart({
-        user: userId,
+        user: userId || null, // Assign userId if authenticated or null for guest
+        cartId, // Add cartId for guest user
         items: [{ product: productId, quantity }],
       });
     } else {
@@ -31,6 +39,11 @@ const addToCart = async (req, res) => {
 
     // Save the cart
     await cart.save();
+    
+    // Set cartId in cookies for guest user (if not logged in)
+    if (!userId) {
+      res.cookie('cartId', cart.cartId, { maxAge: 3600000, httpOnly: true }); // 1 hour expiration
+    }
 
     res.status(200).json({ message: 'Item added to cart', cart });
   } catch (err) {
@@ -41,9 +54,16 @@ const addToCart = async (req, res) => {
 // View cart
 const getCart = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user ? req.user.id : null;
+    const cartId = req.cookies.cartId; // Get cartId for guest users
 
-    const cart = await Cart.findOne({ user: userId }).populate('items.product', 'name price');
+    // Find the cart by userId or cartId
+    let cart;
+    if (userId) {
+      cart = await Cart.findOne({ user: userId }).populate('items.product', 'name price');
+    } else {
+      cart = await Cart.findOne({ cartId }).populate('items.product', 'name price');
+    }
 
     if (!cart) return res.status(404).json({ message: 'Cart not found' });
 
@@ -57,9 +77,15 @@ const getCart = async (req, res) => {
 const updateCartItem = async (req, res) => {
   try {
     const { productId, quantity } = req.body;
-    const userId = req.user.id;
+    const userId = req.user ? req.user.id : null;
+    const cartId = req.cookies.cartId;
 
-    const cart = await Cart.findOne({ user: userId });
+    let cart;
+    if (userId) {
+      cart = await Cart.findOne({ user: userId });
+    } else {
+      cart = await Cart.findOne({ cartId });
+    }
 
     if (!cart) return res.status(404).json({ message: 'Cart not found' });
 
@@ -81,9 +107,15 @@ const updateCartItem = async (req, res) => {
 const removeFromCart = async (req, res) => {
   try {
     const { productId } = req.body;
-    const userId = req.user.id;
+    const userId = req.user ? req.user.id : null;
+    const cartId = req.cookies.cartId;
 
-    const cart = await Cart.findOne({ user: userId });
+    let cart;
+    if (userId) {
+      cart = await Cart.findOne({ user: userId });
+    } else {
+      cart = await Cart.findOne({ cartId });
+    }
 
     if (!cart) return res.status(404).json({ message: 'Cart not found' });
 
@@ -101,9 +133,15 @@ const removeFromCart = async (req, res) => {
 // Clear the cart
 const clearCart = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user ? req.user.id : null;
+    const cartId = req.cookies.cartId;
 
-    const cart = await Cart.findOne({ user: userId });
+    let cart;
+    if (userId) {
+      cart = await Cart.findOne({ user: userId });
+    } else {
+      cart = await Cart.findOne({ cartId });
+    }
 
     if (!cart) return res.status(404).json({ message: 'Cart not found' });
 

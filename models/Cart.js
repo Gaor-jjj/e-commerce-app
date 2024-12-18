@@ -1,8 +1,10 @@
 const mongoose = require('mongoose');
+const { v4: uuidv4 } = require('uuid'); // For generating a unique ID for guests
 
 const cartSchema = new mongoose.Schema(
   {
-    user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: false, default: null }, // Make user optional
+    guestId: { type: String, default: () => uuidv4() }, // Add a guestId for guest users
     items: [
       {
         product: { type: mongoose.Schema.Types.ObjectId, ref: 'Product', required: true },

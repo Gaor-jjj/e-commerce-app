@@ -9,10 +9,10 @@ const {
   clearCart,
 } = require('../controllers/cartController');
 
-router.post('/add', authMiddleware, addToCart); // Add item to cart
-router.get('/', authMiddleware, getCart); // View cart
-router.put('/update', authMiddleware, updateCartItem); // Update cart item
-router.delete('/remove', authMiddleware, removeFromCart); // Remove item from cart
-router.delete('/clear', authMiddleware, clearCart); // Clear cart
+router.post('/add', addToCart); // Add item to cart
+router.get('/', getCart); // View cart
+router.put('/update', updateCartItem); // Update cart item
+router.delete('/remove', removeFromCart); // Remove item from cart
+router.delete('/clear', clearCart); // Clear cart
 
 module.exports = router;

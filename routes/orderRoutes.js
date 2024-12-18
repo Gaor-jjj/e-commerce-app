@@ -8,16 +8,16 @@ const {
   updateOrderStatus,
 } = require('../controllers/orderController');
 
-// Create an order (requires user to be authenticated)
-router.post('/', authMiddleware, createOrder);
+// Create an order (no auth required for guests or logged-in users)
+router.post('/', createOrder); // Now available for both guests and authenticated users
 
-// Get all orders for the logged-in user
-router.get('/', authMiddleware, getOrdersForUser);
+// Get all orders for the logged-in user (auth required)
+router.get('/', authMiddleware, getOrdersForUser); // Only for authenticated users
 
-// Get a specific order by ID
-router.get('/:id', authMiddleware, getOrderById);
+// Get a specific order by ID (auth required)
+router.get('/:id', authMiddleware, getOrderById); // Only for authenticated users
 
-// Update order status (requires admin or higher role in future)
-router.put('/:id/status', authMiddleware, updateOrderStatus);
+// Update order status (auth required)
+router.put('/:id/status', authMiddleware, updateOrderStatus); // Admin or higher roles required in future
 
 module.exports = router;

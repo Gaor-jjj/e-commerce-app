@@ -3,22 +3,22 @@ const Cart = require('../models/Cart');
 
 const createOrder = async (req, res) => {
   try {
-    const userId = req.user.id;
+    // Check if the request is from an authenticated user or a guest
+    const { address, guestId } = req.body;
+    const userId = req.user ? req.user.id : guestId; // Use userId if authenticated, otherwise use guestId
 
-     // Extract address from request body
-     const { address } = req.body;
-     if (
-       !address ||
-       !address.street ||
-       !address.city ||
-       !address.state ||
-       !address.zip ||
-       !address.country
-     ) {
-       return res.status(400).json({ message: 'Address is required and must be complete' });
-     }
+    if (
+      !address ||
+      !address.street ||
+      !address.city ||
+      !address.state ||
+      !address.zip ||
+      !address.country
+    ) {
+      return res.status(400).json({ message: 'Address is required and must be complete' });
+    }
 
-    // Find the user's cart and populate product details
+    // Find the cart based on user or guest ID
     const cart = await Cart.findOne({ user: userId }).populate('items.product', 'price');
     if (!cart || cart.items.length === 0) {
       return res.status(400).json({ message: 'Cart is empty' });
@@ -56,11 +56,10 @@ const createOrder = async (req, res) => {
   }
 };
 
-
-// Get all orders for a user
+// Get all orders for a user or guest (same as before, but guest orders might need handling)
 const getOrdersForUser = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user ? req.user.id : req.query.guestId; // Use userId or guestId
     const orders = await Order.find({ user: userId }).populate('items.product', 'name price'); // Populating product info
     res.status(200).json(orders);
   } catch (err) {
@@ -68,7 +67,7 @@ const getOrdersForUser = async (req, res) => {
   }
 };
 
-// Get a single order by ID
+// Get a single order by ID (no changes needed)
 const getOrderById = async (req, res) => {
   try {
     const orderId = req.params.id;
@@ -82,7 +81,7 @@ const getOrderById = async (req, res) => {
   }
 };
 
-// Update order status (e.g., from 'Pending' to 'Shipped')
+// Update order status (no changes needed for guest users)
 const updateOrderStatus = async (req, res) => {
   try {
     const { status } = req.body;
