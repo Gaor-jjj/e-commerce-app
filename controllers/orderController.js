@@ -5,6 +5,19 @@ const createOrder = async (req, res) => {
   try {
     const userId = req.user.id;
 
+     // Extract address from request body
+     const { address } = req.body;
+     if (
+       !address ||
+       !address.street ||
+       !address.city ||
+       !address.state ||
+       !address.zip ||
+       !address.country
+     ) {
+       return res.status(400).json({ message: 'Address is required and must be complete' });
+     }
+
     // Find the user's cart and populate product details
     const cart = await Cart.findOne({ user: userId }).populate('items.product', 'price');
     if (!cart || cart.items.length === 0) {
@@ -27,6 +40,7 @@ const createOrder = async (req, res) => {
         quantity: item.quantity,
       })),
       totalAmount, // Use the correctly calculated totalAmount
+      address
     });
 
     // Save the order
